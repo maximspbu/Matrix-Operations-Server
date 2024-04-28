@@ -22,17 +22,18 @@ using error_handler = std::function<void()>;
 
 class Session: public std::enable_shared_from_this<Session>{
     public:
+        Session(tcp::socket&& socket);
         void Start();
         void AsyncRead();
         void OnRead();
         void BuildOperationsPriopity();
         void Calculate();
     private:
-        tcp::socket socket;
-        io::streambuf streambuf;
-        std::queue<std::string> outgoing;
-        message_handler on_message;
-        error_handler on_error;
+        tcp::socket socket_;
+        io::streambuf streambuf_;
+        std::queue<std::string> outgoing_;
+        message_handler on_message_;
+        error_handler on_error_;
 };
 
 #endif //SESSION_H
