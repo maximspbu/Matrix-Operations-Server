@@ -18,7 +18,12 @@ void Client::Run(){
 void Client::Connect(const std::string& host, const size_t port){
     boost::asio::ip::tcp::resolver resolver(context_);
     boost::asio::ip::tcp::resolver::results_type endpoints = resolver.resolve(host, std::to_string(port));
-    connect(socket_, endpoints);
+    try {
+        connect(socket_, endpoints);
+    } catch (boost::system::system_error const& e) {
+        std::cout << "Warning: could not connect : " << e.what() << '\n';
+        exit(0);
+    }
 }
 
 void Client::SendRequest(const std::string& request){
@@ -26,7 +31,7 @@ void Client::SendRequest(const std::string& request){
     boost::asio::write(socket_, boost::asio::buffer(request +"\r\n"), ec);
     if (ec){
         std::cerr << "SendRequest error: " << ec.message() << '\n';
-        return;
+        exit(0);
     }
 }
 
@@ -37,12 +42,12 @@ void Client::ReadResponse(){
         if (ec == boost::asio::error::eof){
             std::cerr << "Disconnect\n";
         } else {
-            std::cerr << "ReadResponse error:" << ec.message() << '\n';
+            std::cerr << "ReadResponse error: " << ec.message() << '\n';
         }
         return;
     }
     std::istream is(&buffer_);
     std::string response;
     std::getline(is, response, '\r');
-    std::cout << "Responce: " << response << '\n';
+    std::cout << "Response: " << response << '\n';
 }

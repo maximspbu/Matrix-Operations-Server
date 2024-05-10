@@ -1,34 +1,31 @@
 #include "../include/session.h"
 
+session::session(tcp::socket socket): socket_(std::move(socket)){
+
+}
+
 void session::do_read(){
+    if (!socket_.is_open()){
+        std::cerr << "Socket is closed\n";
+    }
     auto self(shared_from_this());
     socket_.async_read_some(boost::asio::buffer(data_, max_length), 
         [this, self](boost::system::error_code ec, std::size_t length){
+            if (data_ == "quit"){
+                stop();
+            }
             if (!ec){
                 do_write(length);
+            } else {
+                std::cerr << "Error: do_read " << ec.message() << '\n';
+                stop();
             }
         }
     );
-}
-
-void session::convert_expression(std::vector<std::string> request){
-    
-    //params: infix notation string
-    //call calculate_expression, distribute threads to calculate
-    //returns: result (matrix, number, e.t.)
-}
-
-void session::calculate_expression(){
-    //params: request, used variables, array of function pointers
-    //returns: result (matrix, number, e.t.)
-
-}
-
-void session::display_result(std::size_t length){
+    // data_ = "2+2";
+    // std::cout << "flag\n";
     
 }
-
-
 
 std::string session::compute(const std::string& expr){
     Tree tree(expr);
@@ -37,16 +34,23 @@ std::string session::compute(const std::string& expr){
 }
 
 void session::do_write(std::size_t length){
-    std::cout << "flag\n";
-    std::string input = data_;
-    std::cout << "flag\n";
-    std::string output = compute(input);
+    std::string output = compute(data_);
     auto self(shared_from_this());
-    boost::asio::async_write(socket_, boost::asio::buffer(output, length),
+    boost::asio::async_write(socket_, boost::asio::buffer(output, output.size()),
         [this, self](boost::system::error_code ec, std::size_t /*length*/){
             if (!ec){
                 do_read();
+            } else {
+                std::cerr << "Error: do_write " << ec.message() << '\n';
+                stop();
             }
         }
     );
+}
+
+void session::stop(){
+    boost::system::error_code ec;
+    socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+    socket_.close();
+    exit(0); 
 }

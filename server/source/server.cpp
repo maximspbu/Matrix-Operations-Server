@@ -14,3 +14,8 @@ void server::do_accept(){
         }
     );
 }
+
+// server::~server(){
+//     acceptor_.close();
+//     //io_service_.stop();
+// }

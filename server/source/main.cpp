@@ -1,20 +1,14 @@
 #include "../include/server.h"
 
 int main(){   
-    int a = 2;
-    std::cerr << a << '\n';
-    try{
-        if (a != 2){
-            std::cerr << "Usage: async_tcp_echo_server <port>\n";
-            return 1;
-        }
+    try {
 
         boost::asio::io_service io_service;
 
-        server s(io_service, 8001);
+        server s(io_service, 8080);
 
         io_service.run();
-    } catch (std::exception& e){
+    } catch(std::exception& e){
         std::cerr << "Error: " << e.what() << "\n";
     }
 

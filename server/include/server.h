@@ -9,7 +9,7 @@ class server{
 
     private:
         void do_accept();
-
+        //~server();
         tcp::acceptor acceptor_;
         tcp::socket socket_;
 };

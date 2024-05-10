@@ -14,9 +14,7 @@ using boost::asio::ip::tcp;
 
 class session: public std::enable_shared_from_this<session>{
     public:
-        session(tcp::socket socket): socket_(std::move(socket)){
-
-        }
+        session(tcp::socket socket);
 
         void start(){
             do_read();
@@ -25,19 +23,14 @@ class session: public std::enable_shared_from_this<session>{
     private:
         void do_read();
 
-        void convert_expression(std::vector<std::string> request);
-
-        void calculate_expression();
-
-        void display_result(std::size_t length);
-
         std::string compute(const std::string& expr);
 
         void do_write(std::size_t length);
-
+        void stop();
         tcp::socket socket_;
+        boost::asio::streambuf buf;
         enum { max_length = 1024 };
-        char data_[max_length];
+        std::string data_;
         
 };
 

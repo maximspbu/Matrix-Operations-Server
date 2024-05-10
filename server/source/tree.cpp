@@ -75,7 +75,6 @@ std::deque<Token> Tree::exprToTokens(const std::string& expr){
                 int precedence = 6;
                 bool rightAssociative = false;
                 bool unary = true;
-                std::cout << s << '\n';
                 tokens.push_back(Token{Token::Type::Function, s, precedence, rightAssociative, wrap.map_functions[s].second});
             } else {
                 tokens.push_back(Token{Token::Type::Variable, s});
@@ -338,7 +337,6 @@ std::string Tree::MultithreadCompute(){
     std::vector<std::thread> threads;
     while ((root_->value_.type != Token::Type::Number) || (root_->value_.type != Token::Type::Variable)){
         BFS(root_);
-        std::cout << nodesCalc_.size() << '\n';
         if (nodesCalc_.size() == 0){
             break;
         }
@@ -352,6 +350,5 @@ std::string Tree::MultithreadCompute(){
         nodesCalc_.clear();
         threads.clear();
     }
-    //std::cout << root_->value_.str << '\n';
     return root_->value_.str;
 }
