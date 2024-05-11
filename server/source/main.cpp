@@ -11,6 +11,5 @@ int main(){
     } catch(std::exception& e){
         std::cerr << "Error: " << e.what() << "\n";
     }
-
     return 0;
 }

@@ -23,6 +23,10 @@ void Session::DoRead(){
         std::string request;
         std::getline(is, request);
         std::cout << request << '\n';
+        if (request == "quit"){
+            Stop();
+            return;
+        }
         data_ = request;
         DoWrite();
     } catch (const std::exception& e) {
@@ -40,7 +44,7 @@ void Session::DoWrite(){
     std::string output;
     boost::system::error_code ec;
     try {
-        output = Compute(data_); //data_.substr(0, data_.size() - 1)
+        output = Compute(data_);
     } catch (std::exception& e) {
         std::cerr << "Error: tree error\n";
         return ;
@@ -57,5 +61,9 @@ void Session::DoWrite(){
 void Session::Stop(){
     boost::system::error_code ec;
     socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+    if (!ec || ec == boost::asio::error::eof) {
+        boost::asio::write(socket_, boost::asio::buffer("End of session!\n"), ec);
+    }
     socket_.close();
+    
 }

@@ -47,19 +47,4 @@ void Client::ReadResponse(){
     std::string response;
     std::getline(is, response);
     std::cout << "Response: " << response << '\n';
-    // boost::system::error_code ec;
-    // buffer_.consume(buffer_.size());
-    // if (ec){
-    //     if (ec == boost::asio::error::eof){
-    //         std::cerr << "Disconnect\n";
-    //     } else {
-    //         std::cerr << "ReadResponse error: " << ec.message() << '\n';
-    //     }
-    //     exit(-1);
-    // }
-    // read_until(socket_, buffer_, "\n", ec);
-    // std::istream is(&buffer_);
-    // std::string response;
-    // std::getline(is, response, '\n'); // std::getline(is, response, '\r');
-    // std::cout << "Response: " << response << '\n';
 }

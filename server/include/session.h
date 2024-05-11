@@ -23,6 +23,8 @@ class Session: public std::enable_shared_from_this<Session>{
         std::string Compute(const std::string& expr);
         void DoWrite();
         void Stop();
+
+        
         tcp::socket socket_;
         boost::asio::streambuf buf_;
         enum { max_length = 1024 };

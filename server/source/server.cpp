@@ -1,6 +1,6 @@
 #include "../include/server.h"
 
-Server::Server(boost::asio::io_service& io_service, short port): acceptor_(io_service, tcp::endpoint(tcp::v4(), port)), socket_(io_service){
+Server::Server(boost::asio::io_service& io_service, short port): io_service_(io_service), acceptor_(io_service, tcp::endpoint(tcp::v4(), port)), socket_(io_service){
     DoAccept();
 }
 
@@ -15,7 +15,7 @@ void Server::DoAccept(){
     );
 }
 
-// server::~server(){
-//     acceptor_.close();
-//     //io_service_.Stop();
-// }
+Server::~Server(){
+    acceptor_.close();
+    io_service_.stop();
+}
