@@ -31,28 +31,16 @@ public:
         RightParen,
     };
 
-    Token(Type type,
-          const std::string& s,
-          int precedence = -1,
-          bool rightAssociative = false,
-          bool unary = false
-    )
-        : type { type }
-        , str ( s )
-        , precedence { precedence }
-        , rightAssociative { rightAssociative }
-        , unary { unary }
-    {}
+    Token(Type type, const std::string& s, int precedence, bool rightAssociative, bool unary);
 
-    Type type;
-    std::string str;
-    const int precedence;
-    const bool rightAssociative;
-    const bool unary;
+    Type type_;
+    std::string str_;
+    const int precedence_;
+    const bool rightAssociative_;
+    const bool unary_;
 };
 
 struct Node{
-    Node();
     Node(Node* leftChild, Node* rightChild, Token value, Node* parent);
     void AddChildren(Node* leftNode, Node* rightNode);
     Node* leftChild_;
@@ -67,9 +55,9 @@ public:
     void BFS(Node* node);
     std::string MultithreadCompute();
     void Compute(Node* node);
-    std::deque<Token> shuntingYard(const std::deque<Token>& tokens);
-    void fill();
-    std::deque<Token> exprToTokens(const std::string& expr);
+    std::deque<Token> ShuntingYard(const std::deque<Token>& tokens);
+    void Fill();
+    std::deque<Token> ExprToTokens(const std::string& expr);
 
 private:
     std::vector<Node*> nodesCalc_;
@@ -80,9 +68,9 @@ private:
         std::map<std::string, std::pair<std::function<T(U, T)>, bool>> map_functions;
     };
 
-    wrapper<double, double> wrap;
-    wrapper<boost::numeric::ublas::matrix<double>, double> matrix_to_double;
-    wrapper<boost::numeric::ublas::matrix<double>, boost::numeric::ublas::matrix<double>> matrix_to_matrix;
+    wrapper<double, double> wrap_;
+    wrapper<boost::numeric::ublas::matrix<double>, double> matrix_to_double_;
+    wrapper<boost::numeric::ublas::matrix<double>, boost::numeric::ublas::matrix<double>> matrix_to_matrix_;
 };
 
 #endif //TREE_H

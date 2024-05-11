@@ -3,6 +3,19 @@
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/io.hpp>
 
+Token::Token(Type type,
+          const std::string& s,
+          int precedence = -1,
+          bool rightAssociative = false,
+          bool unary = false
+    )
+        : type_ { type }
+        , str_ ( s )
+        , precedence_ { precedence }
+        , rightAssociative_ { rightAssociative }
+        , unary_ { unary }
+    {}
+
 Node::Node(Node* leftChild, Node* rightChild, Token value, Node* parent = nullptr): 
     leftChild_(leftChild), rightChild_(rightChild), value_(value), parent_(parent){
     parent_ = nullptr;
@@ -14,18 +27,18 @@ void Node::AddChildren(Node* leftNode, Node* rightNode = nullptr){
 }
 
 Tree::Tree(const std::string& expr){
-    fill();
-    auto queue = exprToTokens(expr);
-    queue = shuntingYard(queue);
+    Fill();
+    auto queue = ExprToTokens(expr);
+    queue = ShuntingYard(queue);
     for (Token& token: queue){
         nodes_.emplace_back(nullptr, nullptr, token);
     }
     std::stack<Node*> stack_nodes;
     for (Node& node: nodes_){
-        if (node.value_.type == Token::Type::Number || node.value_.type == Token::Type::Variable){
+        if (node.value_.type_ == Token::Type::Number || node.value_.type_ == Token::Type::Variable){
             stack_nodes.push(&node);
         } else {
-            if (node.value_.unary){
+            if (node.value_.unary_){
                 Node* left = stack_nodes.top();
                 stack_nodes.pop();
                 node.AddChildren(left);
@@ -43,15 +56,15 @@ Tree::Tree(const std::string& expr){
     root_ = stack_nodes.top();
 }
 
-void Tree::fill(){
-    wrap.map_functions["sin"] = std::pair([](double x, auto y) { return sin(x);}, 1);
-    wrap.map_functions["cos"] = std::pair([](double x, auto y) { return cos(x);}, 1);
-    wrap.map_functions["max"] = std::pair([](double x, auto y) { return std::max(x, y);}, 0);
-    wrap.map_functions["min"] = std::pair([](double x, auto y) { return std::min(x, y);}, 0);
-    //matrix_to_matrix.map_functions["trans"] = std::pair([](boost::numeric::ublas::matrix<double> x, auto y) { return boost::numeric::ublas::trans(x);}, 1);
+void Tree::Fill(){
+    wrap_.map_functions["sin"] = std::pair([](double x, auto y) { return sin(x);}, 1);
+    wrap_.map_functions["cos"] = std::pair([](double x, auto y) { return cos(x);}, 1);
+    wrap_.map_functions["max"] = std::pair([](double x, auto y) { return std::max(x, y);}, 0);
+    wrap_.map_functions["min"] = std::pair([](double x, auto y) { return std::min(x, y);}, 0);
+    //matrix_to_matrix_.map_functions["trans"] = std::pair([](boost::numeric::ublas::matrix<double> x, auto y) { return boost::numeric::ublas::trans(x);}, 1);
 }
 
-std::deque<Token> Tree::exprToTokens(const std::string& expr){
+std::deque<Token> Tree::ExprToTokens(const std::string& expr){
     std::deque<Token> tokens;
 
     for (const auto* p = expr.c_str(); *p; ++p) {
@@ -75,7 +88,7 @@ std::deque<Token> Tree::exprToTokens(const std::string& expr){
                 int precedence = 6;
                 bool rightAssociative = false;
                 bool unary = true;
-                tokens.push_back(Token{Token::Type::Function, s, precedence, rightAssociative, wrap.map_functions[s].second});
+                tokens.push_back(Token{Token::Type::Function, s, precedence, rightAssociative, wrap_.map_functions[s].second});
             } else {
                 tokens.push_back(Token{Token::Type::Variable, s});
             }
@@ -98,8 +111,8 @@ std::deque<Token> Tree::exprToTokens(const std::string& expr){
                 // If current token is '-'
                 // and if it is the first token, or preceded by another operator, or left-paren,
                 if (tokens.empty()
-                || tokens.back().type == Token::Type::Operator
-                || tokens.back().type == Token::Type::LeftParen
+                || tokens.back().type_ == Token::Type::Operator
+                || tokens.back().type_ == Token::Type::LeftParen
                 ) {
                     // it's unary '-'
                     // note#1 : 'm' is a special operator name for unary '-'
@@ -123,14 +136,14 @@ std::deque<Token> Tree::exprToTokens(const std::string& expr){
     return tokens;
 }
 
-std::deque<Token> Tree::shuntingYard(const std::deque<Token>& tokens) {
+std::deque<Token> Tree::ShuntingYard(const std::deque<Token>& tokens) {
     std::deque<Token> queue;
     std::vector<Token> stack;
 
     // While there are tokens to be read:
     for (auto token: tokens){
         // Read a token
-        switch (token.type){
+        switch (token.type_){
         case Token::Type::Number:
             // If the token is a number, then add it to the output queue
             queue.push_back(token);
@@ -154,8 +167,8 @@ std::deque<Token> Tree::shuntingYard(const std::deque<Token>& tokens) {
                     // or o1 if right associative, and has precedence
                     // *less than* that of o2,
                     if (
-                        (!o1.rightAssociative && o1.precedence <= o2.precedence)
-                    ||  (o1.rightAssociative && o1.precedence <  o2.precedence)){
+                        (!o1.rightAssociative_ && o1.precedence_ <= o2.precedence_)
+                    ||  (o1.rightAssociative_ && o1.precedence_ <  o2.precedence_)){
                         // then pop o2 off the stack,
                         stack.pop_back();
                         // onto the output queue;
@@ -175,7 +188,6 @@ std::deque<Token> Tree::shuntingYard(const std::deque<Token>& tokens) {
         case Token::Type::Function: // FIX
             {
                 // If the token is operator, o1, then:
-                //std::cout << "FLAGFLAGFLAGFLAGFLAGFLAGFLAGFLAGFLAGFLAGFLAGFLAGFLAGFLAGFLAGFLAGFLAGFLAGFLAGFLAGFLAGFLAGFLAGFLAG\n";
                 const auto o1 = token;
 
                 // while there is an operator token,
@@ -188,8 +200,8 @@ std::deque<Token> Tree::shuntingYard(const std::deque<Token>& tokens) {
                     // or o1 if right associative, and has precedence
                     // *less than* that of o2,
                     if (
-                        (!o1.rightAssociative && o1.precedence <= o2.precedence)
-                    ||  (o1.rightAssociative && o1.precedence < o2.precedence)){
+                        (!o1.rightAssociative_ && o1.precedence_ <= o2.precedence_)
+                    ||  (o1.rightAssociative_ && o1.precedence_ < o2.precedence_)){
                         // then pop o2 off the stack,
                         stack.pop_back();
                         // onto the output queue;
@@ -218,7 +230,7 @@ std::deque<Token> Tree::shuntingYard(const std::deque<Token>& tokens) {
 
                 // Until the token at the top of the stack
                 // is a left parenthesis,
-                while (!stack.empty() && stack.back().type != Token::Type::LeftParen){
+                while (!stack.empty() && stack.back().type_ != Token::Type::LeftParen){
                     // pop operators off the stack
                     // onto the output queue.
                     queue.push_back(stack.back());
@@ -229,7 +241,7 @@ std::deque<Token> Tree::shuntingYard(const std::deque<Token>& tokens) {
                 if (!match && stack.empty()){
                     // If the stack runs out without finding a left parenthesis,
                     // then there are mismatched parentheses.
-                    printf("RightParen error (%s)\n", token.str.c_str());
+                    printf("RightParen error (%s)\n", token.str_.c_str());
                     return {};
                 }
 
@@ -240,7 +252,7 @@ std::deque<Token> Tree::shuntingYard(const std::deque<Token>& tokens) {
             break;
 
         default:
-            printf("error (%s)\n", token.str.c_str());
+            printf("error (%s)\n", token.str_.c_str());
             return {};
         }
     }
@@ -250,7 +262,7 @@ std::deque<Token> Tree::shuntingYard(const std::deque<Token>& tokens) {
     while (!stack.empty()){
         // If the operator token on the top of the stack is a parenthesis,
         // then there are mismatched parentheses.
-        if (stack.back().type == Token::Type::LeftParen){
+        if (stack.back().type_ == Token::Type::LeftParen){
             printf("Mismatched parentheses error\n");
             return {};
         }
@@ -264,12 +276,12 @@ std::deque<Token> Tree::shuntingYard(const std::deque<Token>& tokens) {
 
 void Tree::BFS(Node* node){
     //std::cout << node->value_ << '\n';
-    if (node->value_.type == Token::Type::Number || node->value_.type == Token::Type::Variable){
+    if (node->value_.type_ == Token::Type::Number || node->value_.type_ == Token::Type::Variable){
         return ;
     }
-    if ((node->value_.type == Token::Type::Function || node->value_.type == Token::Type::Operator) &&
-        (node->leftChild_->value_.type == Token::Type::Number || node->leftChild_->value_.type == Token::Type::Variable) &&
-        (node->rightChild_ == nullptr || node->rightChild_->value_.type == Token::Type::Number || node->rightChild_->value_.type == Token::Type::Variable)){
+    if ((node->value_.type_ == Token::Type::Function || node->value_.type_ == Token::Type::Operator) &&
+        (node->leftChild_->value_.type_ == Token::Type::Number || node->leftChild_->value_.type_ == Token::Type::Variable) &&
+        (node->rightChild_ == nullptr || node->rightChild_->value_.type_ == Token::Type::Number || node->rightChild_->value_.type_ == Token::Type::Variable)){
         nodesCalc_.push_back(node);
         return ;
     }
@@ -278,64 +290,64 @@ void Tree::BFS(Node* node){
 }
 
 void Tree::Compute(Node* node){
-    switch (node->value_.type){
+    switch (node->value_.type_){
         case Token::Type::Operator:{
-            if (node->value_.unary == 1){
-                const auto lhs = stoi(node->leftChild_->value_.str);
-                switch (node->value_.str[0]){
+            if (node->value_.unary_ == 1){
+                const auto lhs = stoi(node->leftChild_->value_.str_);
+                switch (node->value_.str_[0]){
                 default:
-                    printf("Operator error [%s]\n", node->value_.str.c_str());
+                    printf("Operator error [%s]\n", node->value_.str_.c_str());
                     exit(0);
                     break;
                 case 'm':  
-                    node->value_.str = std::to_string(-lhs); // Special operator name for unary '-'
+                    node->value_.str_ = std::to_string(-lhs); // Special operator name for unary '-'
                     break;
                 }
             } else {
-                const auto lhs = stoi(node->leftChild_->value_.str);
-                const auto rhs = stoi(node->rightChild_->value_.str);
-                switch(node->value_.str[0]){
+                const auto lhs = stoi(node->leftChild_->value_.str_);
+                const auto rhs = stoi(node->rightChild_->value_.str_);
+                switch(node->value_.str_[0]){
                 default:
-                    printf("Operator error [%s]\n", node->value_.str.c_str());
+                    printf("Operator error [%s]\n", node->value_.str_.c_str());
                     exit(0);
                     break;
                 case '^':
-                    node->value_.str = std::to_string(static_cast<int>(pow(lhs, rhs)));
+                    node->value_.str_ = std::to_string(static_cast<int>(pow(lhs, rhs)));
                     break;
                 case '*':
-                    node->value_.str = std::to_string(lhs * rhs);
+                    node->value_.str_ = std::to_string(lhs * rhs);
                     break;
                 case '/':
-                    node->value_.str = std::to_string(lhs / rhs);
+                    node->value_.str_ = std::to_string(lhs / rhs);
                     break;
                 case '+':
-                    node->value_.str = std::to_string(lhs + rhs);
+                    node->value_.str_ = std::to_string(lhs + rhs);
                     break;
                 case '-':
-                    node->value_.str = std::to_string(lhs - rhs);
+                    node->value_.str_ = std::to_string(lhs - rhs);
                     break;
                 }
             }
             break;
         } case Token::Type::Function: {
-            if (node->value_.unary == 1){
-                const auto lhs = stoi(node->leftChild_->value_.str);
-                node->value_.str = std::to_string(wrap.map_functions[node->value_.str].first(static_cast<double>(lhs), 0));
+            if (node->value_.unary_ == 1){
+                const auto lhs = stoi(node->leftChild_->value_.str_);
+                node->value_.str_ = std::to_string(wrap_.map_functions[node->value_.str_].first(static_cast<double>(lhs), 0));
             } else {
-                const auto lhs = stoi(node->leftChild_->value_.str);
-                const auto rhs = stoi(node->rightChild_->value_.str);
-                node->value_.str = std::to_string(wrap.map_functions[node->value_.str].first(static_cast<double>(lhs), static_cast<double>(rhs)));
+                const auto lhs = stoi(node->leftChild_->value_.str_);
+                const auto rhs = stoi(node->rightChild_->value_.str_);
+                node->value_.str_ = std::to_string(wrap_.map_functions[node->value_.str_].first(static_cast<double>(lhs), static_cast<double>(rhs)));
             }
             break;
         }
     }
-    node->value_.type = Token::Type::Number;
+    node->value_.type_ = Token::Type::Number;
     node->AddChildren(nullptr);
 }
 
 std::string Tree::MultithreadCompute(){
     std::vector<std::thread> threads;
-    while ((root_->value_.type != Token::Type::Number) || (root_->value_.type != Token::Type::Variable)){
+    while ((root_->value_.type_ != Token::Type::Number) || (root_->value_.type_ != Token::Type::Variable)){
         BFS(root_);
         if (nodesCalc_.size() == 0){
             break;
@@ -350,5 +362,5 @@ std::string Tree::MultithreadCompute(){
         nodesCalc_.clear();
         threads.clear();
     }
-    return root_->value_.str;
+    return root_->value_.str_;
 }

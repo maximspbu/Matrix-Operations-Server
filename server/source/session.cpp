@@ -1,10 +1,14 @@
 #include "../include/session.h"
 
-session::session(tcp::socket socket): socket_(std::move(socket)){
+Session::Session(tcp::socket socket): socket_(std::move(socket)){
 
 }
 
-void session::do_read(){
+void Session::Start(){
+    DoRead();
+}
+
+void Session::DoRead(){
     try {
         boost::system::error_code ec;
         boost::asio::streambuf buf;
@@ -20,23 +24,23 @@ void session::do_read(){
         std::getline(is, request);
         std::cout << request << '\n';
         data_ = request;
-        do_write();
+        DoWrite();
     } catch (const std::exception& e) {
-        std::cerr << "Error in Session::do_read(): " << e.what() << std::endl;
+        std::cerr << "Error in Session::DoRead(): " << e.what() << std::endl;
         return ;
     }
 }
 
-std::string session::compute(const std::string& expr){
+std::string Session::Compute(const std::string& expr){
     Tree tree(expr); //fix cos(0)
     return tree.MultithreadCompute();
 }
 
-void session::do_write(){
+void Session::DoWrite(){
     std::string output;
     boost::system::error_code ec;
     try {
-        output = compute(data_); //data_.substr(0, data_.size() - 1)
+        output = Compute(data_); //data_.substr(0, data_.size() - 1)
     } catch (std::exception& e) {
         std::cerr << "Error: tree error\n";
         return ;
@@ -44,13 +48,13 @@ void session::do_write(){
     std::cout << output << '\n';
     boost::asio::write(socket_, boost::asio::buffer(output + '\n'), ec);
     if (ec){
-        std::cerr << "Error do_write: " << ec.message() << '\n';
+        std::cerr << "Error DoWrite: " << ec.message() << '\n';
         exit(0);
     }
-    do_read();
+    DoRead();
 }
 
-void session::stop(){
+void Session::Stop(){
     boost::system::error_code ec;
     socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
     socket_.close();

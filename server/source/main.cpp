@@ -5,7 +5,7 @@ int main(){
 
         boost::asio::io_service io_service;
 
-        server s(io_service, 8080);
+        Server s(io_service, 8080);
 
         io_service.run();
     } catch(std::exception& e){

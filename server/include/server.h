@@ -3,12 +3,12 @@
 
 #include "session.h"
 
-class server{
+class Server{
     public:
-        server(boost::asio::io_service& io_service, short port);
+        Server(boost::asio::io_service& io_service, short port);
 
     private:
-        void do_accept();
+        void DoAccept();
         //~server();
         tcp::acceptor acceptor_;
         tcp::socket socket_;

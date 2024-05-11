@@ -12,21 +12,19 @@
 
 using boost::asio::ip::tcp;
 
-class session: public std::enable_shared_from_this<session>{
+class Session: public std::enable_shared_from_this<Session>{
     public:
-        session(tcp::socket socket);
+        Session(tcp::socket socket);
 
-        void start(){
-            do_read();
-        }
+        void Start();
 
     private:
-        void do_read();
-        std::string compute(const std::string& expr);
-        void do_write();
-        void stop();
+        void DoRead();
+        std::string Compute(const std::string& expr);
+        void DoWrite();
+        void Stop();
         tcp::socket socket_;
-        boost::asio::streambuf buf;
+        boost::asio::streambuf buf_;
         enum { max_length = 1024 };
         std::string data_;
         
