@@ -22,10 +22,8 @@ class session: public std::enable_shared_from_this<session>{
 
     private:
         void do_read();
-
         std::string compute(const std::string& expr);
-
-        void do_write(std::size_t length);
+        void do_write();
         void stop();
         tcp::socket socket_;
         boost::asio::streambuf buf;

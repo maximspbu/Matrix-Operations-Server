@@ -5,12 +5,10 @@ Client::Client(): socket_(context_){
 }
 
 void Client::Run(){
-    ReadResponse();
     while (socket_.is_open()){
-        std::cout << "Request:\n";
-        std::string request;
-        std::getline(std::cin, request);
-        SendRequest(request);
+        std::string response;
+        std::getline(std::cin, response);
+        SendRequest(response);
         ReadResponse();
     }
 }
@@ -28,7 +26,7 @@ void Client::Connect(const std::string& host, const size_t port){
 
 void Client::SendRequest(const std::string& request){
     boost::system::error_code ec;
-    boost::asio::write(socket_, boost::asio::buffer(request +"\r\n"), ec);
+    boost::asio::write(socket_, boost::asio::buffer(request +"\n"), ec);
     if (ec){
         std::cerr << "SendRequest error: " << ec.message() << '\n';
         exit(0);
@@ -44,10 +42,10 @@ void Client::ReadResponse(){
         } else {
             std::cerr << "ReadResponse error: " << ec.message() << '\n';
         }
-        return;
+        exit(-1);
     }
     std::istream is(&buffer_);
     std::string response;
-    std::getline(is, response, '\r');
+    std::getline(is, response, '\n'); // std::getline(is, response, '\r');
     std::cout << "Response: " << response << '\n';
 }

@@ -37,13 +37,12 @@ Tree::Tree(const std::string& expr){
                 node.AddChildren(left, right);
                 stack_nodes.push(&node);
             }
-            
         }
     }
     root_ = stack_nodes.top();
 }
 
-void Tree::fill(){
+constexpr void Tree::fill(){
     wrap.map_functions["sin"] = std::pair([](double x, auto y) { return sin(x);}, 1);
     wrap.map_functions["cos"] = std::pair([](double x, auto y) { return cos(x);}, 1);
     wrap.map_functions["max"] = std::pair([](double x, auto y) { return std::max(x, y);}, 0);

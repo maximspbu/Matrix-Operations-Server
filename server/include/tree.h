@@ -68,7 +68,7 @@ public:
     std::string MultithreadCompute();
     void Compute(Node* node);
     std::deque<Token> shuntingYard(const std::deque<Token>& tokens);
-    void fill();
+    constexpr void fill();
     std::deque<Token> exprToTokens(const std::string& expr);
 
 private:
