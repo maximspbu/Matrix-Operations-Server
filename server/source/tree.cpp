@@ -14,6 +14,7 @@ void Node::AddChildren(Node* leftNode, Node* rightNode = nullptr){
 }
 
 Tree::Tree(const std::string& expr){
+    fill();
     auto queue = exprToTokens(expr);
     queue = shuntingYard(queue);
     for (Token& token: queue){

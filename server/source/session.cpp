@@ -18,7 +18,7 @@ void session::do_read(){
         std::istream is(&buf);
         std::string request;
         std::getline(is, request);
-
+        std::cout << request << '\n';
         data_ = request;
         do_write();
     } catch (const std::exception& e) {
@@ -28,8 +28,7 @@ void session::do_read(){
 }
 
 std::string session::compute(const std::string& expr){
-    Tree tree(expr);
-    tree.fill();
+    Tree tree(expr); //fix cos(0)
     return tree.MultithreadCompute();
 }
 
