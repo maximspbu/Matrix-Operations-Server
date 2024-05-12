@@ -2,7 +2,6 @@
 #define TREE_H
 
 #include <iostream>
-#include <sstream>
 #include <string>
 #include <vector>
 #include <deque>
@@ -13,11 +12,9 @@
 #include <math.h>
 #include <thread>
 #include <stack>
-#include <thread>
 
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/io.hpp>
-#include <boost/any.hpp>
 
 class Token {
 public:

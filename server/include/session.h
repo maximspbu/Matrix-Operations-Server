@@ -3,12 +3,7 @@
 
 #include "tree.h"
 
-#include <ctime>
-#include <memory>
-#include <optional>
 #include <boost/asio.hpp>
-#include <boost/numeric/ublas/matrix.hpp>
-#include <string>
 
 using boost::asio::ip::tcp;
 

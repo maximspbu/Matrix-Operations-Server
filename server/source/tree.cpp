@@ -1,32 +1,26 @@
 #include "../include/tree.h"
 
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/io.hpp>
 
-Token::Token(Type type,
-          const std::string& s,
-          int precedence = -1,
-          bool rightAssociative = false,
-          bool unary = false
-    )
-        : type_ { type }
-        , str_ ( s )
-        , precedence_ { precedence }
-        , rightAssociative_ { rightAssociative }
-        , unary_ { unary }
-    {}
+Token::Token(Type type, const std::string& s, int precedence = -1, bool rightAssociative = false, bool unary = false)
+    : type_ { type } , str_ ( s ), precedence_ { precedence }, rightAssociative_ { rightAssociative }, unary_ { unary }
+{
 
-Node::Node(Node* leftChild, Node* rightChild, Token value, Node* parent = nullptr): 
-    leftChild_(leftChild), rightChild_(rightChild), value_(value), parent_(parent){
+}
+
+Node::Node(Node* leftChild, Node* rightChild, Token value, Node* parent = nullptr)
+    : leftChild_(leftChild), rightChild_(rightChild), value_(value), parent_(parent)
+{
     parent_ = nullptr;
 }
 
-void Node::AddChildren(Node* leftNode, Node* rightNode = nullptr){
+void Node::AddChildren(Node* leftNode, Node* rightNode = nullptr)
+{
     leftChild_ = leftNode;
     rightChild_ = rightNode;
 }
 
-Tree::Tree(const std::string& expr){
+Tree::Tree(const std::string& expr)
+{
     Fill();
     auto queue = ExprToTokens(expr);
     queue = ShuntingYard(queue);
@@ -64,7 +58,8 @@ void Tree::Fill(){
     //matrix_to_matrix_.map_functions["trans"] = std::pair([](boost::numeric::ublas::matrix<double> x, auto y) { return boost::numeric::ublas::trans(x);}, 1);
 }
 
-std::deque<Token> Tree::ExprToTokens(const std::string& expr){
+std::deque<Token> Tree::ExprToTokens(const std::string& expr)
+{
     std::deque<Token> tokens;
 
     for (const auto* p = expr.c_str(); *p; ++p) {
@@ -275,7 +270,6 @@ std::deque<Token> Tree::ShuntingYard(const std::deque<Token>& tokens) {
 }
 
 void Tree::BFS(Node* node){
-    //std::cout << node->value_ << '\n';
     if (node->value_.type_ == Token::Type::Number || node->value_.type_ == Token::Type::Variable){
         return ;
     }
@@ -297,8 +291,7 @@ void Tree::Compute(Node* node){
                 switch (node->value_.str_[0]){
                 default:
                     printf("Operator error [%s]\n", node->value_.str_.c_str());
-                    exit(0);
-                    break;
+                    return ;
                 case 'm':  
                     node->value_.str_ = std::to_string(-lhs); // Special operator name for unary '-'
                     break;
@@ -309,8 +302,7 @@ void Tree::Compute(Node* node){
                 switch(node->value_.str_[0]){
                 default:
                     printf("Operator error [%s]\n", node->value_.str_.c_str());
-                    exit(0);
-                    break;
+                    return ;
                 case '^':
                     node->value_.str_ = std::to_string(static_cast<int>(pow(lhs, rhs)));
                     break;
@@ -353,7 +345,6 @@ std::string Tree::MultithreadCompute(){
             break;
         }
         for (Node* node: nodesCalc_){
-            //std::cout << "node value: " << node->value_ << '\n';
             threads.emplace_back(&Tree::Compute, this, node);
         }
         for (std::thread& thread: threads){

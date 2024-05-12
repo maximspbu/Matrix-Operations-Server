@@ -29,6 +29,7 @@ void Session::DoRead(){
         }
         data_ = request;
         DoWrite();
+
     } catch (const std::exception& e) {
         std::cerr << "Error in Session::DoRead(): " << e.what() << std::endl;
         return ;
@@ -36,7 +37,7 @@ void Session::DoRead(){
 }
 
 std::string Session::Compute(const std::string& expr){
-    Tree tree(expr); //fix cos(0)
+    Tree tree(expr);
     return tree.MultithreadCompute();
 }
 
