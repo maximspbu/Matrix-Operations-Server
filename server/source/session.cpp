@@ -5,10 +5,17 @@ Session::Session(tcp::socket socket): socket_(std::move(socket)){
 }
 
 void Session::Start(){
-    DoRead();
+    std::vector<std::thread> threads;
+    for (size_t i = 0; i < max_thread_num; ++i){
+        threads.emplace_back(&Session::DoRead, this);
+    }
+    for (auto& thread: threads){
+        thread.join();
+    }
 }
 
 void Session::DoRead(){
+    
     try {
         boost::system::error_code ec;
         boost::asio::streambuf buf;

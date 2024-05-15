@@ -253,7 +253,7 @@ std::deque<Token> Tree::ShuntingYard(const std::deque<Token>& tokens) {
     }
 
     // When there are no more tokens to read:
-    //   While there are still operator tokens in the stack:
+    // While there are still operator tokens in the stack:
     while (!stack.empty()){
         // If the operator token on the top of the stack is a parenthesis,
         // then there are mismatched parentheses.
@@ -344,14 +344,16 @@ std::string Tree::MultithreadCompute(){
         if (nodesCalc_.size() == 0){
             break;
         }
-        for (Node* node: nodesCalc_){
-            threads.emplace_back(&Tree::Compute, this, node);
-        }
-        for (std::thread& thread: threads){
-            thread.join();
+        for (size_t i = 0; i < ceil(nodesCalc_.size()/(double)max_thread_num); ++i){
+            for (size_t j = 0; j < max_thread_num && max_thread_num*i + j < nodesCalc_.size(); ++j){
+                threads.emplace_back(&Tree::Compute, this, nodesCalc_[i*max_thread_num+j]);
+            }
+            for (std::thread& thread: threads){
+                thread.join();
+            }
+            threads.clear();
         }
         nodesCalc_.clear();
-        threads.clear();
     }
     return root_->value_.str_;
 }
