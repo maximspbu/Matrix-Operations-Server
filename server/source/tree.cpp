@@ -19,7 +19,7 @@ void Node::AddChildren(Node* leftNode, Node* rightNode = nullptr)
     rightChild_ = rightNode;
 }
 
-Tree::Tree(const std::string& expr)
+Tree::Tree(const std::string& expr, std::map<std::string, boost::numeric::ublas::matrix<double>> matricies): matricies_(matricies)
 {
     Fill();
     auto queue = ExprToTokens(expr);
@@ -297,13 +297,6 @@ void Tree::Compute(Node* node){
                     break;
                 }
             } else {
-                if (node->leftChild_->value_.type_ == Token::Type::Matrix) {
-                    const auto lhs = boost::numeric::ublas::matrix<double>();
-                    const auto rhs = stoi(node->rightChild_->value_.str_);
-                } else {
-                    const auto lhs = stoi(node->leftChild_->value_.str_);
-                    const auto rhs = stoi(node->rightChild_->value_.str_);
-                }
                 const auto lhs = stoi(node->leftChild_->value_.str_);
                 const auto rhs = stoi(node->rightChild_->value_.str_);
                 switch(node->value_.str_[0]){

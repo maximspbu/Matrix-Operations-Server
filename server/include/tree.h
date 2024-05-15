@@ -48,7 +48,7 @@ struct Node{
 
 class Tree{
 public:
-    Tree(const std::string& expr);
+    Tree(const std::string& expr, std::map<std::string, boost::numeric::ublas::matrix<double>> matricies);
     void BFS(Node* node);
     std::string MultithreadCompute();
     void Compute(Node* node);
