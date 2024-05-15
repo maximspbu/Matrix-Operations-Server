@@ -29,7 +29,7 @@ Tree::Tree(const std::string& expr)
     }
     std::stack<Node*> stack_nodes;
     for (Node& node: nodes_){
-        if (node.value_.type_ == Token::Type::Number || node.value_.type_ == Token::Type::Variable){
+        if (node.value_.type_ == Token::Type::Number || node.value_.type_ == Token::Type::Matrix){
             stack_nodes.push(&node);
         } else {
             if (node.value_.unary_){
@@ -85,7 +85,7 @@ std::deque<Token> Tree::ExprToTokens(const std::string& expr)
                 bool unary = true;
                 tokens.push_back(Token{Token::Type::Function, s, precedence, rightAssociative, wrap_.map_functions[s].second});
             } else {
-                tokens.push_back(Token{Token::Type::Variable, s});
+                tokens.push_back(Token{Token::Type::Matrix, s});
             }
             --p;
         } else {
@@ -143,7 +143,7 @@ std::deque<Token> Tree::ShuntingYard(const std::deque<Token>& tokens) {
             // If the token is a number, then add it to the output queue
             queue.push_back(token);
             break;
-        case Token::Type::Variable:
+        case Token::Type::Matrix:
             // If the token is a variable, then add it to the output queue
             queue.push_back(token);
             break;
@@ -270,12 +270,12 @@ std::deque<Token> Tree::ShuntingYard(const std::deque<Token>& tokens) {
 }
 
 void Tree::BFS(Node* node){
-    if (node->value_.type_ == Token::Type::Number || node->value_.type_ == Token::Type::Variable){
+    if (node->value_.type_ == Token::Type::Number || node->value_.type_ == Token::Type::Matrix){
         return ;
     }
     if ((node->value_.type_ == Token::Type::Function || node->value_.type_ == Token::Type::Operator) &&
-        (node->leftChild_->value_.type_ == Token::Type::Number || node->leftChild_->value_.type_ == Token::Type::Variable) &&
-        (node->rightChild_ == nullptr || node->rightChild_->value_.type_ == Token::Type::Number || node->rightChild_->value_.type_ == Token::Type::Variable)){
+        (node->leftChild_->value_.type_ == Token::Type::Number || node->leftChild_->value_.type_ == Token::Type::Matrix) &&
+        (node->rightChild_ == nullptr || node->rightChild_->value_.type_ == Token::Type::Number || node->rightChild_->value_.type_ == Token::Type::Matrix)){
         nodesCalc_.push_back(node);
         return ;
     }
@@ -339,7 +339,7 @@ void Tree::Compute(Node* node){
 
 std::string Tree::MultithreadCompute(){
     std::vector<std::thread> threads;
-    while ((root_->value_.type_ != Token::Type::Number) || (root_->value_.type_ != Token::Type::Variable)){
+    while ((root_->value_.type_ != Token::Type::Number) || (root_->value_.type_ != Token::Type::Matrix)){
         BFS(root_);
         if (nodesCalc_.size() == 0){
             break;

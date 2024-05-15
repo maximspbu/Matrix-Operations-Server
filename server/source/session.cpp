@@ -28,6 +28,30 @@ void Session::DoRead(){
             return;
         }
         data_ = request;
+        std::getline(is, request);
+        size_t countMatrix = atoi(request.c_str());
+        std::cout << countMatrix << '\n';
+        for (size_t i = 0; i < countMatrix; ++i){
+            std::getline(is, request, ' ');
+            std::string matrixName = request;
+            std::cout << "Matrix name: " << matrixName << '\n';
+            std::getline(is, request, ' ');
+            size_t rowSize = atoi(request.c_str());
+            std::cout << "Row size: " << rowSize << '\n';
+            std::getline(is, request, '[');
+            size_t columnSize = atoi(request.c_str());
+            std::cout << "Column size: " << columnSize << '\n';
+            std::vector<double> elems;
+            for (size_t j = 0; j < rowSize*columnSize - 1; ++j){
+                std::getline(is, request, ' ');
+                std::cout << "Elem: " << request << '\n';
+                elems.push_back(atoi(request.c_str()));
+            }
+            std::getline(is, request, ']');
+            std::cout << "Elem: " << request << '\n';
+            elems.push_back(atoi(request.c_str()));
+            matricies_.emplace_back(matrixName, rowSize, columnSize, elems);
+        }
         DoWrite();
 
     } catch (const std::exception& e) {
