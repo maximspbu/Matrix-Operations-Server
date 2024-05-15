@@ -297,6 +297,13 @@ void Tree::Compute(Node* node){
                     break;
                 }
             } else {
+                if (node->leftChild_->value_.type_ == Token::Type::Matrix) {
+                    const auto lhs = boost::numeric::ublas::matrix<double>();
+                    const auto rhs = stoi(node->rightChild_->value_.str_);
+                } else {
+                    const auto lhs = stoi(node->leftChild_->value_.str_);
+                    const auto rhs = stoi(node->rightChild_->value_.str_);
+                }
                 const auto lhs = stoi(node->leftChild_->value_.str_);
                 const auto rhs = stoi(node->rightChild_->value_.str_);
                 switch(node->value_.str_[0]){

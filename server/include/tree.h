@@ -60,6 +60,7 @@ private:
     std::vector<Node*> nodesCalc_;
     std::vector<Node> nodes_;
     Node* root_;
+    std::map<std::string, boost::numeric::ublas::matrix<double>> matricies_;
     template <typename T, typename U>
     struct wrapper{
         std::map<std::string, std::pair<std::function<T(U, T)>, bool>> map_functions;
