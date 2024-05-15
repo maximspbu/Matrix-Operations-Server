@@ -22,7 +22,7 @@ public:
         Unknown,
         Number,
         Operator,
-        Variable,
+        Matrix,
         Function,
         LeftParen,
         RightParen,
