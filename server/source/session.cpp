@@ -51,6 +51,7 @@ void Session::DoRead(){
             std::cout << "Elem: " << request << '\n';
             elems.push_back(atoi(request.c_str()));
             matricies_.emplace_back(matrixName, rowSize, columnSize, elems);
+            std::getline(is, request, '\n');
         }
         DoWrite();
 
@@ -61,7 +62,22 @@ void Session::DoRead(){
 }
 
 std::string Session::Compute(const std::string& expr){
-    Tree tree(expr);
+    std::map<std::string, boost::numeric::ublas::matrix<double>> matricies;
+    for (auto& matrix: matricies_){
+        boost::numeric::ublas::matrix<double> m(matrix.rowSize, matrix.columnSize);
+        for (size_t i = 0; i < matrix.rowSize; ++i){
+            for (size_t j = 0; j < matrix.columnSize; ++j){
+                m(i, j) = matrix.values[matrix.columnSize*i + j];
+                std::cout << m(i, j) << '\n';
+            }
+        }
+        for (size_t i = 0; i < matrix.values.size(); ++i){
+            std::cout << matrix.values[i] << ' ';
+        }
+        std::cout << '\n';
+        matricies[matrix.name] = m; //matrix.values
+    }
+    Tree tree(expr, matricies);
     return tree.MultithreadCompute();
 }
 
@@ -80,6 +96,7 @@ void Session::DoWrite(){
         std::cerr << "Error DoWrite: " << ec.message() << '\n';
         exit(0);
     }
+    matricies_.clear();
     DoRead();
 }
 

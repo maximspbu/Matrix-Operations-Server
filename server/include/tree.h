@@ -60,6 +60,7 @@ private:
     std::vector<Node*> nodesCalc_;
     std::vector<Node> nodes_;
     Node* root_;
+    const size_t max_thread_num = 4;
     std::map<std::string, boost::numeric::ublas::matrix<double>> matricies_;
     template <typename T, typename U>
     struct wrapper{
