@@ -4,6 +4,7 @@
 #include "tree.h"
 
 #include <boost/asio.hpp>
+#include <boost/asio/spawn.hpp>
 
 using boost::asio::ip::tcp;
 

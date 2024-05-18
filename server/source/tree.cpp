@@ -4,7 +4,7 @@
 Token::Token(Type type, const std::string& s, int precedence = -1, bool rightAssociative = false, bool unary = false)
     : type_ { type } , str_ ( s ), precedence_ { precedence }, rightAssociative_ { rightAssociative }, unary_ { unary }
 {
-
+    
 }
 
 Node::Node(Node* leftChild, Node* rightChild, Token value, Node* parent = nullptr)
@@ -19,7 +19,8 @@ void Node::AddChildren(Node* leftNode, Node* rightNode = nullptr)
     rightChild_ = rightNode;
 }
 
-Tree::Tree(const std::string& expr, std::map<std::string, boost::numeric::ublas::matrix<double>> matricies): matricies_(matricies)
+Tree::Tree(const std::string& expr, std::map<std::string, boost::numeric::ublas::matrix<double>> matricies)
+    : matricies_(matricies), errorString_("")
 {
     Fill();
     auto queue = ExprToTokens(expr);
@@ -237,6 +238,7 @@ std::deque<Token> Tree::ShuntingYard(const std::deque<Token>& tokens) {
                     // If the stack runs out without finding a left parenthesis,
                     // then there are mismatched parentheses.
                     printf("RightParen error (%s)\n", token.str_.c_str());
+                    errorString_ = ("RightParen error (%s)\n", token.str_.c_str());
                     return {};
                 }
 
@@ -248,6 +250,7 @@ std::deque<Token> Tree::ShuntingYard(const std::deque<Token>& tokens) {
 
         default:
             printf("error (%s)\n", token.str_.c_str());
+            errorString_ = ("Error (%s)\n", token.str_.c_str());
             return {};
         }
     }
@@ -259,6 +262,7 @@ std::deque<Token> Tree::ShuntingYard(const std::deque<Token>& tokens) {
         // then there are mismatched parentheses.
         if (stack.back().type_ == Token::Type::LeftParen){
             printf("Mismatched parentheses error\n");
+            errorString_ = "Mismatched parentheses error";
             return {};
         }
 
@@ -284,14 +288,19 @@ void Tree::BFS(Node* node){
 }
 
 void Tree::Compute(Node* node){
+    if (errorString_.size() != 0){
+        return ;
+    }
     switch (node->value_.type_){
         case Token::Type::Operator:{
             if (node->value_.unary_ == 1){
                 if (node->leftChild_->value_.type_ == Token::Type::Matrix){
                     auto lhs = matricies_[node->leftChild_->value_.str_];
+
                     switch (node->value_.str_[0]){
                     default:
                         printf("Operator error [%s]\n", node->value_.str_.c_str());
+                        errorString_ = ("Operator error [%s]\n", node->value_.str_.c_str());
                         return ;
                     case 'm':  
                         matricies_[node->leftChild_->value_.str_] = -matricies_[node->leftChild_->value_.str_]; // Special operator name for unary '-'
@@ -306,6 +315,7 @@ void Tree::Compute(Node* node){
                 switch (node->value_.str_[0]){
                 default:
                     printf("Operator error [%s]\n", node->value_.str_.c_str());
+                    errorString_ = ("Operator error [%s]\n", node->value_.str_.c_str());
                     return ;
                 case 'm':  
                     node->value_.str_ = std::to_string(-lhs); // Special operator name for unary '-'
@@ -320,6 +330,7 @@ void Tree::Compute(Node* node){
                     switch(node->value_.str_[0]){
                     default:
                         printf("Operator error [%s]\n", node->value_.str_.c_str());
+                        errorString_ = ("Operator error [%s]\n", node->value_.str_.c_str());
                         return ;
                     case '^':
                         node->value_.str_ = std::to_string(static_cast<int64_t>(pow(lhs, rhs)));
@@ -330,6 +341,7 @@ void Tree::Compute(Node* node){
                     case '/':
                         if (rhs == 0){
                             printf("Division by zero!\n");
+                            errorString_ = "Division by zero!";
                             return ;
                         } 
                         node->value_.str_ = std::to_string(lhs / rhs);
@@ -352,6 +364,7 @@ void Tree::Compute(Node* node){
                     switch(node->value_.str_[0]){
                     default:
                         printf("Operator error [%s]\n", node->value_.str_.c_str());
+                        errorString_ = ("Operator error [%s]\n", node->value_.str_.c_str());
                         return ;
                     case '*':
                         *rhs *= lhs;
@@ -359,6 +372,7 @@ void Tree::Compute(Node* node){
                     case '/':
                         if (lhs == 0){
                             printf("Division by zero!\n");
+                            errorString_ = "Division by zero!";
                             return ;
                         } 
                         *rhs /= lhs;
@@ -374,10 +388,12 @@ void Tree::Compute(Node* node){
                     switch (node->value_.str_[0]) {
                     default:
                         printf("Operator error [%s]\n", node->value_.str_.c_str());
+                        errorString_ = ("Operator error [%s]\n", node->value_.str_.c_str());
                         return ;
                     case '*':
                         if (lhs->size2() != rhs->size1()){
                             printf("Size of matricies are incorrect!\n");
+                            errorString_ = ("Size of matricies are incorrect!");
                             return ;
                         } 
                         *lhs = boost::numeric::ublas::prod(*lhs, *rhs);
@@ -385,6 +401,7 @@ void Tree::Compute(Node* node){
                     case '+':
                         if (lhs->size1() != rhs->size1() || lhs->size2() != rhs->size2()){
                             printf("Size of matricies are incorrect!\n");
+                            errorString_ = "Size of matricies are incorrect!";
                             return ;
                         } 
                         *lhs += *rhs;
@@ -392,6 +409,7 @@ void Tree::Compute(Node* node){
                     case '-':
                         if (lhs->size1() != rhs->size1() || lhs->size2() != rhs->size2()){
                             printf("Size of matricies are incorrect!\n");
+                            errorString_ = "Size of matricies are incorrect!";
                             return ;
                         } 
                         *lhs -= *rhs;
@@ -431,6 +449,14 @@ std::string Tree::MultithreadCompute(){
         }
         for (Node* node: nodesCalc_){
             threads.emplace_back(&Tree::Compute, this, node);
+            if (errorString_.size() != 0){
+                for (std::thread& thread: threads){
+                    thread.detach();
+                }
+                nodesCalc_.clear();
+                threads.clear();
+                return "";
+            }
         }
         for (std::thread& thread: threads){
             thread.join();

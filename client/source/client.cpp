@@ -55,7 +55,7 @@ void Client::ReadResponse(){
     boost::system::error_code ec;
     boost::asio::streambuf buf;
 
-    read_until(socket_, buf, "\n", ec);
+    read_until(socket_, buf, "\t", ec);
 
     if (ec) {
         throw boost::system::system_error(ec);
@@ -63,7 +63,6 @@ void Client::ReadResponse(){
 
     std::istream is(&buf);
     std::string response;
-    std::getline(is, response);
-    
+    std::getline(is, response, '\t');
     std::cout << "Response: " << response << '\n';
 }
