@@ -8,20 +8,26 @@ void Client::Run(){
     while (socket_.is_open()){
         std::string response;
         std::getline(std::cin, response);
-        std::cout << "How many matricies?\n";
-        std::string countMatrix;
-        std::getline(std::cin, countMatrix);
-        response += '\n' + countMatrix + '\n';
-        if (atoi(countMatrix.c_str()) > 0){
-            std::cout << "Enter matrix like: <name> <row size> <column size> [<num> <num> <num>]\n";
-            for (size_t i = 0; i < atoi(countMatrix.c_str()); ++i){
-                std::string matrixString;
-                std::getline(std::cin, matrixString);
-                response += matrixString + '\n';
+        if (response != "quit"){
+            std::cout << "How many matricies?\n";
+            std::string countMatrix;
+            std::getline(std::cin, countMatrix);
+            response += '\n' + countMatrix + '\n';
+            if (atoi(countMatrix.c_str()) > 0){
+                std::cout << "Enter matrix like: <name> <row size> <column size> [<num> <num> <num>]\n";
+                for (size_t i = 0; i < atoi(countMatrix.c_str()); ++i){
+                    std::string matrixString;
+                    std::getline(std::cin, matrixString);
+                    response += matrixString + '\n';
+                }
             }
         }
         SendRequest(response);
         ReadResponse();
+        if (!socket_.is_open()){
+            std::cerr << "Socket is closed!\n";
+            return ;
+        }
     }
 }
 

@@ -55,6 +55,7 @@ public:
     std::deque<Token> ShuntingYard(const std::deque<Token>& tokens);
     void Fill();
     std::deque<Token> ExprToTokens(const std::string& expr);
+    std::string GetErrorString();
 
 private:
     std::vector<Node*> nodesCalc_;
@@ -62,6 +63,7 @@ private:
     Node* root_;
     const size_t max_thread_num = 4;
     std::map<std::string, boost::numeric::ublas::matrix<double>> matricies_;
+    std::string errorString_;
     template <typename T, typename U>
     struct wrapper{
         std::map<std::string, std::pair<std::function<T(U, T)>, bool>> map_functions;

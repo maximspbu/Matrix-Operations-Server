@@ -68,14 +68,9 @@ std::string Session::Compute(const std::string& expr){
         for (size_t i = 0; i < matrix.rowSize; ++i){
             for (size_t j = 0; j < matrix.columnSize; ++j){
                 m(i, j) = matrix.values[matrix.columnSize*i + j];
-                std::cout << m(i, j) << '\n';
             }
         }
-        for (size_t i = 0; i < matrix.values.size(); ++i){
-            std::cout << matrix.values[i] << ' ';
-        }
-        std::cout << '\n';
-        matricies[matrix.name] = m; //matrix.values
+        matricies[matrix.name] = m;
     }
     Tree tree(expr, matricies);
     return tree.MultithreadCompute();
@@ -107,5 +102,4 @@ void Session::Stop(){
         boost::asio::write(socket_, boost::asio::buffer("End of session!\n"), ec);
     }
     socket_.close();
-    
 }

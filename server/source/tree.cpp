@@ -328,6 +328,10 @@ void Tree::Compute(Node* node){
                         node->value_.str_ = std::to_string(lhs * rhs);
                         break;
                     case '/':
+                        if (rhs == 0){
+                            printf("Division by zero!\n");
+                            return ;
+                        } 
                         node->value_.str_ = std::to_string(lhs / rhs);
                         break;
                     case '+':
@@ -339,51 +343,66 @@ void Tree::Compute(Node* node){
                     }
                     node->value_.type_ = Token::Type::Number;
                     node->AddChildren(nullptr, nullptr);
-                }
-                if (node->leftChild_->value_.type_ == Token::Type::Number || node->rightChild_->value_.type_ == Token::Type::Number){
+                } else if (node->leftChild_->value_.type_ == Token::Type::Number || node->rightChild_->value_.type_ == Token::Type::Number){
                     if (node->rightChild_->value_.type_ == Token::Type::Number){
                         std::swap(node->leftChild_, node->rightChild_);
                     }
                     const auto lhs = stoi(node->leftChild_->value_.str_);
-                    auto rhs = matricies_[node->rightChild_->value_.str_];
+                    auto rhs = &matricies_[node->rightChild_->value_.str_];
                     switch(node->value_.str_[0]){
                     default:
                         printf("Operator error [%s]\n", node->value_.str_.c_str());
                         return ;
                     case '*':
-                        rhs *= lhs;
+                        *rhs *= lhs;
                         break;
                     case '/':
-                        rhs /= lhs;
+                        if (lhs == 0){
+                            printf("Division by zero!\n");
+                            return ;
+                        } 
+                        *rhs /= lhs;
                         break;
                     }
-                    matricies_[node->rightChild_->value_.str_] = rhs;
                     node->value_.str_ = node->rightChild_->value_.str_;
                     node->value_.type_ = Token::Type::Matrix;
+                    node->AddChildren(nullptr);
+                    break;
+                } else {
+                    auto lhs = &matricies_[node->leftChild_->value_.str_];
+                    auto rhs = &matricies_[node->rightChild_->value_.str_];
+                    switch (node->value_.str_[0]) {
+                    default:
+                        printf("Operator error [%s]\n", node->value_.str_.c_str());
+                        return ;
+                    case '*':
+                        if (lhs->size2() != rhs->size1()){
+                            printf("Size of matricies are incorrect!\n");
+                            return ;
+                        } 
+                        *lhs = boost::numeric::ublas::prod(*lhs, *rhs);
+                        break;
+                    case '+':
+                        if (lhs->size1() != rhs->size1() || lhs->size2() != rhs->size2()){
+                            printf("Size of matricies are incorrect!\n");
+                            return ;
+                        } 
+                        *lhs += *rhs;
+                        break;
+                    case '-':
+                        if (lhs->size1() != rhs->size1() || lhs->size2() != rhs->size2()){
+                            printf("Size of matricies are incorrect!\n");
+                            return ;
+                        } 
+                        *lhs -= *rhs;
+                        break;
+                    }
+                    node->value_.str_ = node->leftChild_->value_.str_;
+                    matricies_.erase(node->rightChild_->value_.str_);
+                    node->value_.type_ = Token::Type::Matrix;
                     node->AddChildren(nullptr, nullptr);
-                    break;
                 }
-                auto lhs = matricies_[node->leftChild_->value_.str_];
-                auto rhs = matricies_[node->rightChild_->value_.str_];
-                switch (node->value_.str_[0]) {
-                default:
-                    printf("Operator error [%s]\n", node->value_.str_.c_str());
-                    return ;
-                case '*':
-                    lhs = boost::numeric::ublas::prod(lhs, rhs);
-                    break;
-                case '+':
-                    lhs += rhs;
-                    break;
-                case '-':
-                    lhs -= rhs;
-                    break;
-                }
-                std::cout << "esh\n";
-                matricies_[node->leftChild_->value_.str_] = lhs;
-                node->value_.str_ = node->leftChild_->value_.str_;
-                node->value_.type_ = Token::Type::Matrix;
-                node->AddChildren(nullptr, nullptr);
+                
             }
             break;
         } case Token::Type::Function: {
@@ -426,8 +445,13 @@ std::string Tree::MultithreadCompute(){
                 std::cout << "result elem: " << matricies_[root_->value_.str_](i, j) << '\n';
                 result += std::to_string(matricies_[root_->value_.str_](i, j)) + ' ';
             }
+            result += '\n';
         }
         return result;
     }
     return root_->value_.str_;
+}
+
+std::string Tree::GetErrorString(){
+    return errorString_;
 }
