@@ -23,7 +23,6 @@ void Session::DoRead(){
 
             std::istream is(&buf_);
             std::string request;
-            std::cout << "flag\n";
             std::getline(is, request);
             std::cout << request << '\n';
             if (request == "quit"){
@@ -33,27 +32,36 @@ void Session::DoRead(){
             if (request != ""){
                 data_ = request;
                 std::getline(is, request);
-                size_t countMatrix = atoi(request.c_str());
+                size_t countMatrix;
+                Convert<size_t>("matricies count", request, countMatrix, atoi);
                 std::cout << countMatrix << '\n';
                 for (size_t i = 0; i < countMatrix; ++i){
                     std::getline(is, request, ' ');
                     std::string matrixName = request;
                     std::cout << "Matrix name: " << matrixName << '\n';
                     std::getline(is, request, ' ');
-                    size_t rowSize = atoi(request.c_str());
+                    size_t rowSize;
+                    Convert<size_t>("row size", request, rowSize, atoi);
                     std::cout << "Row size: " << rowSize << '\n';
                     std::getline(is, request, '[');
-                    size_t columnSize = atoi(request.c_str());
+                    size_t columnSize;
+                    Convert<size_t>("column size", request, columnSize, atoi);
                     std::cout << "Column size: " << columnSize << '\n';
                     std::vector<double> elems;
                     for (size_t j = 0; j < rowSize*columnSize - 1; ++j){
                         std::getline(is, request, ' ');
                         std::cout << "Elem: " << request << '\n';
-                        elems.push_back(atoi(request.c_str()));
+                        try {
+                            elems.push_back(std::stod(request.c_str()));
+                        } catch (std::exception& e){
+                            std::cerr << "Incorrect type of element!\n";
+                            Stop();
+                            return ;
+                        }
                     }
                     std::getline(is, request, ']');
                     std::cout << "Elem: " << request << '\n';
-                    elems.push_back(atoi(request.c_str()));
+                    elems.push_back(std::stod(request.c_str()));
                     matricies_.emplace_back(matrixName, rowSize, columnSize, elems);
                     std::getline(is, request, '\n');
                 }
@@ -69,7 +77,6 @@ void Session::DoRead(){
 
 std::string Session::Compute(const std::string& expr){
     std::map<std::string, boost::numeric::ublas::matrix<double>> matricies;
-    std::cout << "flag\n";
     for (auto& matrix: matricies_){
         boost::numeric::ublas::matrix<double> m(matrix.rowSize, matrix.columnSize);
         for (size_t i = 0; i < matrix.rowSize; ++i){
@@ -79,9 +86,7 @@ std::string Session::Compute(const std::string& expr){
         }
         matricies[matrix.name] = m;
     }
-    std::cout << "flag\n";
     Tree tree(expr, matricies);
-    std::cout << "flag\n";
     return (tree.GetErrorString().size() == 0)? tree.MultithreadCompute(): tree.GetErrorString();
 }
 

@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 #include <deque>
-#include <utility>
 #include <functional>
 #include <map>
 #include <stdio.h>
@@ -14,7 +13,6 @@
 #include <stack>
 
 #include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/io.hpp>
 
 class Token {
 public:

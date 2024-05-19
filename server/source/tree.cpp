@@ -67,9 +67,18 @@ std::deque<Token> Tree::ExprToTokens(const std::string& expr)
         if (isblank(*p)){
             continue;
         } else if (isdigit(*p)){
+            bool point = 0;
             const auto* b = p;
-            while (isdigit(*p)){
+            while (isdigit(*p) || (*p == '.')){
                 ++p;
+                if (*p == '.' && point == 0){
+                    point = 1;
+                    continue;
+                } else if (*p == '.' && point == 1) {
+                    errorString_ = "Incorrect points count!\n";
+                    std::cerr << "Incorrect points count!\n";
+                    return {};
+                }
             }
             auto s = std::string(b, p);
             tokens.push_back(Token{Token::Type::Number, s});
@@ -135,9 +144,8 @@ std::deque<Token> Tree::ExprToTokens(const std::string& expr)
 std::deque<Token> Tree::ShuntingYard(const std::deque<Token>& tokens) {
     std::deque<Token> queue;
     std::vector<Token> stack;
-
     // While there are tokens to be read:
-    for (auto token: tokens){
+    for (const auto& token: tokens){
         // Read a token
         switch (token.type_){
         case Token::Type::Number:
@@ -311,7 +319,7 @@ void Tree::Compute(Node* node){
                     node->AddChildren(nullptr);
                     break;
                 }
-                const auto lhs = stoi(node->leftChild_->value_.str_);
+                const auto lhs = stod(node->leftChild_->value_.str_);
                 switch (node->value_.str_[0]){
                 default:
                     printf("Operator error [%s]\n", node->value_.str_.c_str());
@@ -325,8 +333,8 @@ void Tree::Compute(Node* node){
                 node->AddChildren(nullptr);
             } else {
                 if (node->leftChild_->value_.type_ == Token::Type::Number && node->rightChild_->value_.type_ == Token::Type::Number){
-                    const auto lhs = stoi(node->leftChild_->value_.str_);
-                    const auto rhs = stoi(node->rightChild_->value_.str_);
+                    const auto lhs = std::stod(node->leftChild_->value_.str_);
+                    const auto rhs = std::stod(node->rightChild_->value_.str_);
                     switch(node->value_.str_[0]){
                     default:
                         printf("Operator error [%s]\n", node->value_.str_.c_str());
@@ -359,9 +367,9 @@ void Tree::Compute(Node* node){
                     if (node->rightChild_->value_.type_ == Token::Type::Number){
                         std::swap(node->leftChild_, node->rightChild_);
                     }
-                    const auto lhs = stoi(node->leftChild_->value_.str_);
+                    const auto lhs = std::stod(node->leftChild_->value_.str_);
                     auto rhs = &matricies_[node->rightChild_->value_.str_];
-                    switch(node->value_.str_[0]){
+                    switch (node->value_.str_[0]){
                     default:
                         printf("Operator error [%s]\n", node->value_.str_.c_str());
                         errorString_ = ("Operator error [%s]\n", node->value_.str_.c_str());
@@ -425,11 +433,11 @@ void Tree::Compute(Node* node){
             break;
         } case Token::Type::Function: {
             if (node->value_.unary_ == 1){
-                const auto lhs = stoi(node->leftChild_->value_.str_);
+                const auto lhs = std::stod(node->leftChild_->value_.str_);
                 node->value_.str_ = std::to_string(wrap_.map_functions[node->value_.str_].first(static_cast<double>(lhs), 0));
             } else {
-                const auto lhs = stoi(node->leftChild_->value_.str_);
-                const auto rhs = stoi(node->rightChild_->value_.str_);
+                const auto lhs = std::stod(node->leftChild_->value_.str_);
+                const auto rhs = std::stod(node->rightChild_->value_.str_);
                 node->value_.str_ = std::to_string(wrap_.map_functions[node->value_.str_].first(static_cast<double>(lhs), static_cast<double>(rhs)));
             }
             node->value_.type_ = Token::Type::Number;

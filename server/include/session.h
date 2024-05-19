@@ -4,7 +4,6 @@
 #include "tree.h"
 
 #include <boost/asio.hpp>
-#include <boost/asio/spawn.hpp>
 
 using boost::asio::ip::tcp;
 
@@ -19,6 +18,16 @@ class Session: public std::enable_shared_from_this<Session>{
         std::string Compute(const std::string& expr);
         void DoWrite();
         void Stop();
+        template<typename T>
+        void Convert(const std::string& name, const std::string& str, T& output, std::function<T(const char*)> f){
+            try {
+                output = f(str.c_str());
+            } catch (std::exception& e){
+                std::cerr << "Incorrect type of " << name << '\n';
+                Stop();
+                return ;
+            }
+        }
 
         tcp::socket socket_;
         boost::asio::streambuf buf_;
