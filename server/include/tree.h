@@ -11,6 +11,7 @@
 #include <math.h>
 #include <thread>
 #include <stack>
+#include <chrono>
 
 #include <boost/numeric/ublas/matrix.hpp>
 
@@ -46,10 +47,10 @@ struct Node{
 
 class Tree{
 public:
-    Tree(const std::string& expr, std::map<std::string, boost::numeric::ublas::matrix<double>> matricies);
+    Tree(const std::string& expr, const std::map<std::string, boost::numeric::ublas::matrix<double>>& matricies);
     void BFS(Node* node);
     std::string MultithreadCompute();
-    void Compute(Node* node);
+    void Compute(Node* node, std::stop_source& source);
     std::deque<Token> ShuntingYard(const std::deque<Token>& tokens);
     void Fill();
     std::deque<Token> ExprToTokens(const std::string& expr);

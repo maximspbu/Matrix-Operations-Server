@@ -19,12 +19,16 @@ void Node::AddChildren(Node* leftNode, Node* rightNode = nullptr)
     rightChild_ = rightNode;
 }
 
-Tree::Tree(const std::string& expr, std::map<std::string, boost::numeric::ublas::matrix<double>> matricies)
-    : matricies_(matricies), errorString_("")
+Tree::Tree(const std::string& expr, const std::map<std::string, boost::numeric::ublas::matrix<double>>& matricies)
+    : errorString_("")
 {
+    matricies_ = std::move(matricies);
     Fill();
     auto queue = ExprToTokens(expr);
     queue = ShuntingYard(queue);
+    if (errorString_.size() != 0){
+        return ;
+    }
     for (Token& token: queue){
         nodes_.emplace_back(nullptr, nullptr, token);
     }
@@ -234,19 +238,21 @@ std::deque<Token> Tree::ShuntingYard(const std::deque<Token>& tokens) {
 
                 // Until the token at the top of the stack
                 // is a left parenthesis,
-                while (!stack.empty() && stack.back().type_ != Token::Type::LeftParen){
+                while (!stack.empty()){
                     // pop operators off the stack
                     // onto the output queue.
+                    if (stack.back().type_ == Token::Type::LeftParen){
+                        match = true; // GOVNO
+                        break;
+                    }
                     queue.push_back(stack.back());
                     stack.pop_back();
-                    match = true;
                 }
-
                 if (!match && stack.empty()){
                     // If the stack runs out without finding a left parenthesis,
                     // then there are mismatched parentheses.
                     printf("RightParen error (%s)\n", token.str_.c_str());
-                    errorString_ = ("RightParen error (%s)\n", token.str_.c_str());
+                    errorString_ = "RightParen error!\n";
                     return {};
                 }
 
@@ -262,7 +268,6 @@ std::deque<Token> Tree::ShuntingYard(const std::deque<Token>& tokens) {
             return {};
         }
     }
-
     // When there are no more tokens to read:
     //   While there are still operator tokens in the stack:
     while (!stack.empty()){
@@ -295,8 +300,12 @@ void Tree::BFS(Node* node){
     BFS(node->rightChild_);
 }
 
-void Tree::Compute(Node* node){
+void Tree::Compute(Node* node, std::stop_source& source){
     if (errorString_.size() != 0){
+        return ;
+    }
+    std::stop_token stoken = source.get_token();
+    if (stoken.stop_requested()){
         return ;
     }
     switch (node->value_.type_){
@@ -304,15 +313,18 @@ void Tree::Compute(Node* node){
             if (node->value_.unary_ == 1){
                 if (node->leftChild_->value_.type_ == Token::Type::Matrix){
                     auto lhs = matricies_[node->leftChild_->value_.str_];
-
                     switch (node->value_.str_[0]){
                     default:
                         printf("Operator error [%s]\n", node->value_.str_.c_str());
                         errorString_ = ("Operator error [%s]\n", node->value_.str_.c_str());
+                        source.request_stop();
                         return ;
                     case 'm':  
                         matricies_[node->leftChild_->value_.str_] = -matricies_[node->leftChild_->value_.str_]; // Special operator name for unary '-'
                         break;
+                    }
+                    if (stoken.stop_requested()){
+                        return ;
                     }
                     node->value_.str_ = node->leftChild_->value_.str_;
                     node->value_.type_ = Token::Type::Matrix;
@@ -324,10 +336,14 @@ void Tree::Compute(Node* node){
                 default:
                     printf("Operator error [%s]\n", node->value_.str_.c_str());
                     errorString_ = ("Operator error [%s]\n", node->value_.str_.c_str());
+                    source.request_stop();
                     return ;
                 case 'm':  
                     node->value_.str_ = std::to_string(-lhs); // Special operator name for unary '-'
                     break;
+                }
+                if (stoken.stop_requested()){
+                    return ;
                 }
                 node->value_.type_ = Token::Type::Number;
                 node->AddChildren(nullptr);
@@ -339,6 +355,7 @@ void Tree::Compute(Node* node){
                     default:
                         printf("Operator error [%s]\n", node->value_.str_.c_str());
                         errorString_ = ("Operator error [%s]\n", node->value_.str_.c_str());
+                        source.request_stop();
                         return ;
                     case '^':
                         node->value_.str_ = std::to_string(static_cast<int64_t>(pow(lhs, rhs)));
@@ -350,6 +367,7 @@ void Tree::Compute(Node* node){
                         if (rhs == 0){
                             printf("Division by zero!\n");
                             errorString_ = "Division by zero!";
+                            source.request_stop();
                             return ;
                         } 
                         node->value_.str_ = std::to_string(lhs / rhs);
@@ -360,6 +378,9 @@ void Tree::Compute(Node* node){
                     case '-':
                         node->value_.str_ = std::to_string(lhs - rhs);
                         break;
+                    }
+                    if (stoken.stop_requested()){
+                        return ;
                     }
                     node->value_.type_ = Token::Type::Number;
                     node->AddChildren(nullptr, nullptr);
@@ -373,6 +394,7 @@ void Tree::Compute(Node* node){
                     default:
                         printf("Operator error [%s]\n", node->value_.str_.c_str());
                         errorString_ = ("Operator error [%s]\n", node->value_.str_.c_str());
+                        source.request_stop();
                         return ;
                     case '*':
                         *rhs *= lhs;
@@ -381,10 +403,14 @@ void Tree::Compute(Node* node){
                         if (lhs == 0){
                             printf("Division by zero!\n");
                             errorString_ = "Division by zero!";
+                            source.request_stop();
                             return ;
                         } 
                         *rhs /= lhs;
                         break;
+                    }
+                    if (stoken.stop_requested()){
+                        return ;
                     }
                     node->value_.str_ = node->rightChild_->value_.str_;
                     node->value_.type_ = Token::Type::Matrix;
@@ -397,11 +423,13 @@ void Tree::Compute(Node* node){
                     default:
                         printf("Operator error [%s]\n", node->value_.str_.c_str());
                         errorString_ = ("Operator error [%s]\n", node->value_.str_.c_str());
+                        source.request_stop();
                         return ;
                     case '*':
                         if (lhs->size2() != rhs->size1()){
                             printf("Size of matricies are incorrect!\n");
                             errorString_ = ("Size of matricies are incorrect!");
+                            source.request_stop();
                             return ;
                         } 
                         *lhs = boost::numeric::ublas::prod(*lhs, *rhs);
@@ -410,6 +438,7 @@ void Tree::Compute(Node* node){
                         if (lhs->size1() != rhs->size1() || lhs->size2() != rhs->size2()){
                             printf("Size of matricies are incorrect!\n");
                             errorString_ = "Size of matricies are incorrect!";
+                            source.request_stop();
                             return ;
                         } 
                         *lhs += *rhs;
@@ -418,10 +447,14 @@ void Tree::Compute(Node* node){
                         if (lhs->size1() != rhs->size1() || lhs->size2() != rhs->size2()){
                             printf("Size of matricies are incorrect!\n");
                             errorString_ = "Size of matricies are incorrect!";
+                            source.request_stop();
                             return ;
                         } 
                         *lhs -= *rhs;
                         break;
+                    }
+                    if (stoken.stop_requested()){
+                        return ;
                     }
                     node->value_.str_ = node->leftChild_->value_.str_;
                     matricies_.erase(node->rightChild_->value_.str_);
@@ -440,34 +473,35 @@ void Tree::Compute(Node* node){
                 const auto rhs = std::stod(node->rightChild_->value_.str_);
                 node->value_.str_ = std::to_string(wrap_.map_functions[node->value_.str_].first(static_cast<double>(lhs), static_cast<double>(rhs)));
             }
+            if (stoken.stop_requested()){
+                return ;
+            }
             node->value_.type_ = Token::Type::Number;
             node->AddChildren(nullptr, nullptr);
             break;
         }
     }
-
 }
 
-std::string Tree::MultithreadCompute(){
-    std::vector<std::thread> threads;
+std::string Tree::MultithreadCompute(){ //stop_source
+    if (errorString_.size() != 0){
+        return errorString_;
+    }
+    using namespace std::chrono_literals;
+    std::vector<std::jthread> threads;
+    std::stop_source source;
     while ((root_->value_.type_ != Token::Type::Number) || (root_->value_.type_ != Token::Type::Matrix)){
         BFS(root_);
         if (nodesCalc_.size() == 0){
             break;
         }
+        {
         for (Node* node: nodesCalc_){
-            threads.emplace_back(&Tree::Compute, this, node);
-            if (errorString_.size() != 0){
-                for (std::thread& thread: threads){
-                    thread.detach();
-                }
-                nodesCalc_.clear();
-                threads.clear();
-                return "";
-            }
+            threads.emplace_back(&Tree::Compute, this, node, std::ref(source));
         }
-        for (std::thread& thread: threads){
-            thread.join();
+        }
+        if (errorString_.size() != 0){
+            return errorString_;
         }
         nodesCalc_.clear();
         threads.clear();
