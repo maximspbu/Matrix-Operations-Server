@@ -5,16 +5,15 @@
 #include <string>
 #include <vector>
 #include <deque>
-#include <utility>
 #include <functional>
 #include <map>
 #include <stdio.h>
 #include <math.h>
 #include <thread>
 #include <stack>
+#include <chrono>
 
 #include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/io.hpp>
 
 class Token {
 public:
@@ -22,7 +21,7 @@ public:
         Unknown,
         Number,
         Operator,
-        Variable,
+        Matrix,
         Function,
         LeftParen,
         RightParen,
@@ -48,19 +47,22 @@ struct Node{
 
 class Tree{
 public:
-    Tree(const std::string& expr);
+    Tree(const std::string& expr, const std::map<std::string, boost::numeric::ublas::matrix<double>>& matricies);
     void BFS(Node* node);
     std::string MultithreadCompute();
-    void Compute(Node* node);
+    void Compute(Node* node, std::stop_source& source);
     std::deque<Token> ShuntingYard(const std::deque<Token>& tokens);
     void Fill();
     std::deque<Token> ExprToTokens(const std::string& expr);
+    std::string GetErrorString();
 
 private:
     std::vector<Node*> nodesCalc_;
     std::vector<Node> nodes_;
     Node* root_;
     const size_t max_thread_num = 4;
+    std::map<std::string, boost::numeric::ublas::matrix<double>> matricies_;
+    std::string errorString_;
     template <typename T, typename U>
     struct wrapper{
         std::map<std::string, std::pair<std::function<T(U, T)>, bool>> map_functions;
