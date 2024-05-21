@@ -34,7 +34,7 @@ void Session::DoRead(){
                 std::getline(is, request);
                 size_t countMatrix;
                 Convert<size_t>("matricies count", request, countMatrix, atoi);
-                std::cout << countMatrix << '\n';
+                std::cout << "Matrcies count: " << countMatrix << '\n';
                 for (size_t i = 0; i < countMatrix; ++i){
                     std::getline(is, request, ' ');
                     std::string matrixName = request;

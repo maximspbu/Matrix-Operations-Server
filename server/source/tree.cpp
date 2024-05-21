@@ -26,7 +26,7 @@ Tree::Tree(const std::string& expr, const std::map<std::string, boost::numeric::
     Fill();
     auto queue = ExprToTokens(expr);
     queue = ShuntingYard(queue);
-    if (errorString_.size() != 0){
+    if (!errorString_.empty()){
         return ;
     }
     for (Token& token: queue){
@@ -484,7 +484,7 @@ void Tree::Compute(Node* node, std::stop_source& source){
 }
 
 std::string Tree::MultithreadCompute(){ //stop_source
-    if (errorString_.size() != 0){
+    if (!errorString_.empty()){
         return errorString_;
     }
     using namespace std::chrono_literals;
@@ -492,7 +492,7 @@ std::string Tree::MultithreadCompute(){ //stop_source
     std::stop_source source;
     while ((root_->value_.type_ != Token::Type::Number) || (root_->value_.type_ != Token::Type::Matrix)){
         BFS(root_);
-        if (nodesCalc_.size() == 0){
+        if (nodesCalc_.empty()){
             break;
         }
         {
@@ -500,7 +500,7 @@ std::string Tree::MultithreadCompute(){ //stop_source
             threads.emplace_back(&Tree::Compute, this, node, std::ref(source));
         }
         }
-        if (errorString_.size() != 0){
+        if (!errorString_.empty()){
             return errorString_;
         }
         nodesCalc_.clear();
